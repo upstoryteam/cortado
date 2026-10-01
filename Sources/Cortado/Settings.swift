@@ -28,6 +28,9 @@ final class Settings {
     /// Whether the panel shows the detail under the memory pressure line.
     var memoryExpanded: Bool { didSet { defaults.set(memoryExpanded, forKey: Key.memoryExpanded) } }
 
+    /// Whether the panel has ever been opened. Until it has, the app opens it at launch.
+    var panelSeen: Bool { didSet { defaults.set(panelSeen, forKey: Key.panelSeen) } }
+
     /// How the most recent session ended, shown in the panel afterwards.
     var lastSessionNote: String? { didSet { defaults.set(lastSessionNote, forKey: Key.lastSessionNote) } }
     /// True while a session holds the lid-closed override, to recover after a crash.
@@ -60,6 +63,7 @@ final class Settings {
         hotspotFallback = defaults.bool(forKey: Key.hotspotFallback)
         switchBackToWiFi = defaults.bool(forKey: Key.switchBackToWiFi)
         memoryExpanded = defaults.bool(forKey: Key.memoryExpanded)
+        panelSeen = defaults.bool(forKey: Key.panelSeen)
         lastSessionNote = defaults.string(forKey: Key.lastSessionNote)
         sessionInProgress = defaults.bool(forKey: Key.sessionInProgress)
     }
@@ -86,6 +90,7 @@ final class Settings {
         static let hotspotFallback = "hotspotFallback"
         static let switchBackToWiFi = "switchBackToWiFi"
         static let memoryExpanded = "memoryExpanded"
+        static let panelSeen = "panelSeen"
         static let lastSessionNote = "lastSessionNote"
         static let sessionInProgress = "sessionInProgress"
     }

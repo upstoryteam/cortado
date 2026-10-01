@@ -10,11 +10,38 @@ phone hotspot when the internet drops.
 | --- | --- | --- |
 | <img src="docs/panel-idle.png" width="260" alt="The panel on Auto and off, waiting for an agent"> | <img src="docs/panel-agents.png" width="260" alt="The panel on Auto and on, until Claude Code finishes"> | <img src="docs/panel.png" width="260" alt="The panel on On, with the lengths under the control"> |
 
+## Install
+
+1. Download [Cortado.dmg](https://github.com/upstoryteam/cortado/releases/latest/download/Cortado.dmg)
+   and open it.
+2. Drag Cortado onto the Applications folder.
+3. Open Cortado from Applications.
+
+<img src="docs/install.png" width="480" alt="The window that opens from Cortado.dmg: the Cortado icon, an arrow, and the Applications folder">
+
+Cortado has no window and no Dock icon. It lives in the menu bar, as a small cup
+at the top right of the screen. The first time it runs, its panel opens by
+itself to show where.
+
+It needs macOS 15 or later, on Apple silicon or Intel.
+
+It asks for three things, each once, and only if you want what they are for:
+
+- **Staying awake with the lid closed**: click **Allow…** in the panel and
+  approve with your Mac password. [Keep awake, lid closed](#keep-awake-lid-closed)
+  says what that installs.
+- **Opening at login**: a switch in Settings.
+- **The hotspot**: pick your phone in Settings. To leave the hotspot when a
+  saved Wi-Fi network appears, click **Allow…** there too, for Location access.
+
+To remove it, see [Uninstall](#uninstall).
+
 ## Build
 
 ```sh
 ./build.sh            # builds build/Cortado.app
 ./build.sh install    # also copies it to /Applications and relaunches it
+./build.sh dmg        # builds build/Cortado.dmg, the download
 swift test            # two tests briefly toggle the real lid-closed override
 ```
 
@@ -28,6 +55,44 @@ The icon is `Support/AppIcon.icns`, made from the square artwork beside it:
 
 ```sh
 swift Support/icon.swift Support/AppIcon.png Support/AppIcon.icns
+```
+
+## Releasing
+
+```sh
+./build.sh dmg
+gh release create v0.1.0 build/Cortado.dmg --title "Cortado 0.1.0"
+```
+
+`./build.sh dmg` builds the app for both Apple silicon and Intel, signs it for
+other people's Macs, packs it into a disk image whose window says what to do
+with it, and has Apple notarize the image. A Mac that downloads a notarized
+image opens it without complaint. One that downloads anything else refuses to
+open the app.
+
+The version is in `Support/Info.plist`. The link under Install goes to the
+newest release's `Cortado.dmg`, so the file keeps that name.
+
+The Mac that builds a release needs two things, set up once:
+
+- A **Developer ID Application** certificate in its keychain. Xcode makes one:
+  Settings, Accounts, the team, Manage Certificates, the plus button. Only the
+  team's account holder can.
+- Notary credentials saved under the name `cortado`:
+
+  ```sh
+  xcrun notarytool store-credentials cortado --apple-id <Apple ID> --team-id <team ID>
+  ```
+
+  It asks for an app-specific password, made at account.apple.com.
+
+Without the certificate the image is still built, for looking at its window,
+and the script says it is not fit to hand out.
+
+The picture behind the icons in that window is `Support/DiskImage.tiff`:
+
+```sh
+swift Support/dmg.swift Support/DiskImage.tiff
 ```
 
 ## What it does

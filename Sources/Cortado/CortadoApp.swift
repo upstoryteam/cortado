@@ -73,12 +73,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if let flag = CommandLine.arguments.firstIndex(of: "--show-panel"),
            CommandLine.arguments.indices.contains(flag + 1) {
             Task { await checkPanel(savingTo: URL(fileURLWithPath: CommandLine.arguments[flag + 1])) }
+            return
         }
         if let flag = CommandLine.arguments.firstIndex(of: "--film"),
            CommandLine.arguments.indices.contains(flag + 1) {
             Task { await filmPanel(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1])) }
+            return
         }
         #endif
+        // The app has no window. The first time it runs, the panel opens to show where
+        // it lives, once the menu bar has had a moment to place the icon.
+        if !model.settings.panelSeen {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in togglePanel() }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -100,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             return
         }
         model.panelVisible = true
+        model.settings.panelSeen = true
         let panel = PanelView { [weak self] height in
             self?.resizePanel(to: height)
         }
