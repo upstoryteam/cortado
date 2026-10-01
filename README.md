@@ -10,6 +10,8 @@ phone hotspot when the internet drops.
 
 For macOS 15 or later, on Apple silicon or Intel. [How to install it](#install).
 
+Website: [build.upstory.co/cortado](https://build.upstory.co/cortado)
+
 | Auto, waiting for an agent | Auto, while an agent works | On, for a set time |
 | --- | --- | --- |
 | <img src="docs/panel-idle.png" width="260" alt="The panel on Auto and off, waiting for an agent"> | <img src="docs/panel-agents.png" width="260" alt="The panel on Auto and on, until Claude Code finishes"> | <img src="docs/panel.png" width="260" alt="The panel on On, with the lengths under the control"> |
