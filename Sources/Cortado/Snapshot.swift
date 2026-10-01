@@ -4,14 +4,14 @@ import SwiftUI
 
 /// Development aids, debug builds only.
 ///
-/// `AgentBar --snapshot <folder>` renders the panel, the settings and the menu bar
+/// `Cortado --snapshot <folder>` renders the panel, the settings and the menu bar
 /// icon to PNG files so the layout can be checked without clicking through the
 /// menu bar. It briefly starts real sessions to draw the running states.
 enum Snapshot {
     static func write(to folder: URL) {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let defaults = UserDefaults(suiteName: "AgentBar.snapshot") ?? .standard
-        defaults.removePersistentDomain(forName: "AgentBar.snapshot")
+        let defaults = UserDefaults(suiteName: "Cortado.snapshot") ?? .standard
+        defaults.removePersistentDomain(forName: "Cortado.snapshot")
         let settings = Settings(defaults: defaults)
         // A made-up phone, so the pictures don't show the one this Mac has saved.
         settings.hotspotName = "Sam iPhone 17 Pro"
@@ -83,12 +83,12 @@ enum Snapshot {
         window.orderOut(nil)
     }
 
-    /// `AgentBar --diagnose` starts a real session, watches the agents for a few
+    /// `Cortado --diagnose` starts a real session, watches the agents for a few
     /// seconds, prints what it saw, then kills itself without cleaning up. The
     /// watchdog should restore normal sleep within a few seconds.
     static func diagnose() async {
-        let defaults = UserDefaults(suiteName: "AgentBar.snapshot") ?? .standard
-        defaults.removePersistentDomain(forName: "AgentBar.snapshot")
+        let defaults = UserDefaults(suiteName: "Cortado.snapshot") ?? .standard
+        defaults.removePersistentDomain(forName: "Cortado.snapshot")
         let model = AppModel(settings: Settings(defaults: defaults))
         model.start()
         model.session.start(duration: 600)
@@ -112,7 +112,7 @@ enum Snapshot {
         kill(getpid(), SIGKILL)
     }
 
-    /// `AgentBar --measure` times each piece of work the app repeats, so its
+    /// `Cortado --measure` times each piece of work the app repeats, so its
     /// polling intervals can be chosen from numbers rather than guesses.
     static func measure() async {
         let clock = ContinuousClock()
@@ -146,8 +146,8 @@ enum Snapshot {
 
         // A minute of each state with the panel closed, ticking as the app does.
         // Agents are left out of the first minute so that it stays idle.
-        let defaults = UserDefaults(suiteName: "AgentBar.snapshot") ?? .standard
-        defaults.removePersistentDomain(forName: "AgentBar.snapshot")
+        let defaults = UserDefaults(suiteName: "Cortado.snapshot") ?? .standard
+        defaults.removePersistentDomain(forName: "Cortado.snapshot")
         let model = AppModel(settings: Settings(defaults: defaults))
         model.settings.startWithAgents = false
         model.start()
@@ -212,7 +212,7 @@ enum Snapshot {
     }
 }
 
-/// `AgentBar --show-panel <file>` drives the real popover from the real menu bar
+/// `Cortado --show-panel <file>` drives the real popover from the real menu bar
 /// item: opens it, clicks in it, saves pictures, and closes it.
 extension AppDelegate {
     func checkPanel(savingTo url: URL) async {
@@ -231,7 +231,7 @@ extension AppDelegate {
 
         func state() -> String {
             let ends = model.session.session?.end.map { Format.duration($0.timeIntervalSinceNow) } ?? "-"
-            return "session \(model.session.isActive), override \(PowerControl.isLidSleepDisabled()), ends in \(ends), popover \(popover.contentSize)"
+            return "shown \(popover.isShown), session \(model.session.isActive), override \(PowerControl.isLidSleepDisabled()), ends in \(ends), popover \(popover.contentSize)"
         }
         func save(_ suffix: String) {
             guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
@@ -286,14 +286,14 @@ extension AppDelegate {
             }
             return heights
         }
-        click(modeCentre(2), in: view)
+        await click(modeCentre(2), in: view)
         print("panel height after picking On, every 25 ms:", await heights())
         try? await Task.sleep(for: .seconds(1))
         print("picked On:", state())
         save("on")
         saveIcon("on")
 
-        click(chipCentre(1), in: view)
+        await click(chipCentre(1), in: view)
         try? await Task.sleep(for: .seconds(1))
         print("clicked 1h:", state())
 
@@ -307,7 +307,7 @@ extension AppDelegate {
             print("clicked clock: menu with \(titles.count) times, \(titles.first ?? "-") to \(titles.last ?? "-")")
             RunLoop.main.perform(inModes: [.eventTracking, .common]) { menu.cancelTracking() }
         }
-        click(chipCentre(6), in: view)
+        await click(chipCentre(6), in: view)
         try? await Task.sleep(for: .seconds(1))
         NotificationCenter.default.removeObserver(opened)
 
@@ -324,7 +324,7 @@ extension AppDelegate {
             let knob = columns.filter { $0.1 > (low + high) / 2 }.map(\.0)
             return Int(CGFloat(knob.reduce(0, +)) / CGFloat(knob.count) / scale)
         }
-        click(modeCentre(0), in: view)
+        await click(modeCentre(0), in: view)
         var path: [Int] = []
         for _ in 0..<12 {
             try? await Task.sleep(for: .milliseconds(25))
@@ -334,7 +334,7 @@ extension AppDelegate {
         try? await Task.sleep(for: .seconds(1))
         print("picked Off:", state())
 
-        click(modeCentre(1), in: view)
+        await click(modeCentre(1), in: view)
         try? await Task.sleep(for: .seconds(1))
         print("picked Auto: on for agents \(model.settings.startWithAgents), waiting \(model.session.isWaitingForAgents)")
         save("waiting")
@@ -347,35 +347,35 @@ extension AppDelegate {
         save("agents")
 
         // Off is off, whatever the agent is doing.
-        click(modeCentre(0), in: view)
+        await click(modeCentre(0), in: view)
         try? await Task.sleep(for: .seconds(4))
         print("picked Off under a working agent:", state(), "on for agents \(model.settings.startWithAgents)")
 
         // The memory line follows the keep-awake section and a divider. Opened, it shows the apps.
         let memory = NSPoint(x: view.bounds.midX, y: modes.maxY + PanelView.inset + 1 + 6 + 15)
-        click(memory, in: view)
+        await click(memory, in: view)
         try? await Task.sleep(for: .seconds(1))
         print("opened Memory: \(model.settings.memoryExpanded), top apps \(model.memory.topGroups.count), popover \(popover.contentSize)")
         save("memory")
-        click(memory, in: view)
+        await click(memory, in: view)
         try? await Task.sleep(for: .seconds(1))
         print("closed Memory: \(!model.settings.memoryExpanded), popover \(popover.contentSize)")
 
         // The auto-join checkbox ends the hotspot section, above the two rows of the footer.
         let footer = 2 * (30 + 12 + 1)
         let before = model.settings.hotspotFallback
-        click(NSPoint(x: PanelView.inset + 8, y: view.bounds.height - CGFloat(footer) - PanelView.inset - 8), in: view)
+        await click(NSPoint(x: PanelView.inset + 8, y: view.bounds.height - CGFloat(footer) - PanelView.inset - 8), in: view)
         try? await Task.sleep(for: .seconds(1))
         print("clicked auto-join: \(before) to \(model.settings.hotspotFallback)")
         save("no-auto-join")
         model.settings.hotspotFallback = before
 
         // Settings is a different height altogether, and Back returns to this one.
-        click(NSPoint(x: view.bounds.midX, y: view.bounds.height - 64), in: view)
+        await click(NSPoint(x: view.bounds.midX, y: view.bounds.height - 64), in: view)
         try? await Task.sleep(for: .seconds(1))
         print("opened Settings: popover \(popover.contentSize), panel \(view.fittingSize)")
         save("settings")
-        click(NSPoint(x: PanelView.inset + 20, y: 20), in: view)
+        await click(NSPoint(x: PanelView.inset + 20, y: 20), in: view)
         try? await Task.sleep(for: .seconds(1))
         print("went back: popover \(popover.contentSize), panel \(view.fittingSize)")
 
@@ -386,24 +386,15 @@ extension AppDelegate {
         exit(0)
     }
 
-    /// A real mouse click at a point measured from the view's top-left corner.
-    /// The events go through the queue, where a control tracking the mouse looks for the release.
-    private func click(_ point: NSPoint, in view: NSView) {
-        guard let window = view.window else { return }
-        // Whoever is at the Mac may have clicked elsewhere since the last one.
-        window.makeKey()
-        let local = NSPoint(x: point.x, y: view.isFlipped ? point.y : view.bounds.height - point.y)
-        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
-            guard let event = NSEvent.mouseEvent(
-                with: type, location: view.convert(local, to: nil), modifierFlags: [],
-                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
-                context: nil, eventNumber: 0, clickCount: 1, pressure: 1
-            ) else { return }
-            NSApp.postEvent(event, atStart: false)
-        }
+    /// A real mouse click at a point measured from the view's top-left corner,
+    /// held for a moment as a finger holds it.
+    private func click(_ point: NSPoint, in view: NSView) async {
+        mouse(.leftMouseDown, at: point, in: view)
+        try? await Task.sleep(for: .milliseconds(90))
+        mouse(.leftMouseUp, at: point, in: view)
     }
 }
-/// `AgentBar --film <folder>` opens the real popover and saves each change of the
+/// `Cortado --film <folder>` opens the real popover and saves each change of the
 /// control as a strip of frames, with the window's size as the window server had
 /// it and any moment the main thread stood still.
 extension AppDelegate {

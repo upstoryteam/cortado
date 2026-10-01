@@ -3,7 +3,7 @@ import QuartzCore
 import SwiftUI
 
 @main
-enum AgentBarApp {
+enum CortadoApp {
     static func main() {
         let app = NSApplication.shared
         #if DEBUG

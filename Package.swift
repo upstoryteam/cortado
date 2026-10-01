@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "AgentBar",
+    name: "Cortado",
     platforms: [.macOS(.v15)],
     targets: [
         .executableTarget(
-            name: "AgentBar",
+            name: "Cortado",
             swiftSettings: [
                 .defaultIsolation(MainActor.self),
                 .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
@@ -19,8 +19,8 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "AgentBarTests",
-            dependencies: ["AgentBar"]
+            name: "CortadoTests",
+            dependencies: ["Cortado"]
         ),
     ]
 )

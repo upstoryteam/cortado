@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import AgentBar
+@testable import Cortado
 
 private let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
 private let allRules = StopRules(batteryFloor: 20, stopWhenHot: true, agentsGrace: 600, endsWithAgents: true)
@@ -312,8 +312,8 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
 
     /// A controller with only the agent rules in play, so the Mac's battery and heat can't decide a test.
     @MainActor private func controller() -> (SessionController, AgentMonitor, Settings) {
-        let defaults = UserDefaults(suiteName: "AgentBar.tests")!
-        defaults.removePersistentDomain(forName: "AgentBar.tests")
+        let defaults = UserDefaults(suiteName: "Cortado.tests")!
+        defaults.removePersistentDomain(forName: "Cortado.tests")
         let settings = Settings(defaults: defaults)
         settings.batteryFloorEnabled = false
         settings.stopWhenHot = false
@@ -419,8 +419,8 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
 
     @Test(.enabled(if: PowerControl.hasLidSleepPermission() && !PowerControl.isLidSleepDisabled()))
     @MainActor func `a session turns the override on and stopping turns it off`() {
-        let defaults = UserDefaults(suiteName: "AgentBar.tests")!
-        defaults.removePersistentDomain(forName: "AgentBar.tests")
+        let defaults = UserDefaults(suiteName: "Cortado.tests")!
+        defaults.removePersistentDomain(forName: "Cortado.tests")
         let settings = Settings(defaults: defaults)
         let controller = SessionController(
             settings: settings, agents: AgentMonitor(), hotspot: HotspotController(settings: settings)
@@ -440,8 +440,8 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
 
     @Test(.enabled(if: PowerControl.hasLidSleepPermission() && !PowerControl.isLidSleepDisabled()))
     @MainActor func `an override left behind by a crash is cleared at launch`() {
-        let defaults = UserDefaults(suiteName: "AgentBar.tests")!
-        defaults.removePersistentDomain(forName: "AgentBar.tests")
+        let defaults = UserDefaults(suiteName: "Cortado.tests")!
+        defaults.removePersistentDomain(forName: "Cortado.tests")
         let settings = Settings(defaults: defaults)
         settings.sessionInProgress = true
         PowerControl.setLidSleepDisabled(true)
@@ -458,8 +458,8 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
 
 @Suite struct Preferences {
     @Test @MainActor func `switching on lasts two hours until another length is chosen, and no limit is remembered`() {
-        let defaults = UserDefaults(suiteName: "AgentBar.tests.preferences")!
-        defaults.removePersistentDomain(forName: "AgentBar.tests.preferences")
+        let defaults = UserDefaults(suiteName: "Cortado.tests.preferences")!
+        defaults.removePersistentDomain(forName: "Cortado.tests.preferences")
         let settings = Settings(defaults: defaults)
         let twoHours: TimeInterval = 2 * 3600
         #expect(settings.defaultLength == twoHours)

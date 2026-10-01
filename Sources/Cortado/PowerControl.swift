@@ -41,14 +41,14 @@ nonisolated enum PowerControl {
         let user = NSUserName()
         guard user.wholeMatch(of: /[A-Za-z0-9_.\-]+/) != nil else { return false }
         let rule = "\(user) ALL=(root) NOPASSWD: \(allowCommand), \(restoreCommand)"
-        let staged = "/private/etc/sudoers.d/.agentbar.new"
-        let installed = "/private/etc/sudoers.d/agentbar"
+        let staged = "/private/etc/sudoers.d/.cortado.new"
+        let installed = "/private/etc/sudoers.d/cortado"
         let command = """
-            umask 227; /usr/bin/printf '%s\\n' '# AgentBar: keep the Mac awake with the lid closed' '\(rule)' > \(staged) \
+            umask 227; /usr/bin/printf '%s\\n' '# Cortado: keep the Mac awake with the lid closed' '\(rule)' > \(staged) \
             && /usr/sbin/visudo -cf \(staged) && /bin/mv -f \(staged) \(installed) \
             || { /bin/rm -f \(staged); exit 1; }
             """
-        let prompt = "AgentBar needs permission to keep the Mac awake with the lid closed."
+        let prompt = "Cortado needs permission to keep the Mac awake with the lid closed."
         let script = "do shell script \"\(command)\" with prompt \"\(prompt)\" with administrator privileges"
         return Shell.run("/usr/bin/osascript", ["-e", script]).succeeded
     }
@@ -95,7 +95,7 @@ nonisolated enum PowerControl {
         let status = IOPMAssertionCreateWithName(
             kIOPMAssertPreventUserIdleSystemSleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "AgentBar keep-awake session" as CFString,
+            "Cortado keep-awake session" as CFString,
             &id
         )
         return status == kIOReturnSuccess ? id : nil

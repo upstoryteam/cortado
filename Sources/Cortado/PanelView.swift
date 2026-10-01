@@ -74,7 +74,7 @@ struct PanelView: View {
             }
             .padding(.vertical, 6)
             Divider()
-            Button("Quit AgentBar") { NSApp.terminate(nil) }
+            Button("Quit Cortado") { NSApp.terminate(nil) }
                 .padding(.vertical, 6)
         }
         .buttonStyle(RowStyle())

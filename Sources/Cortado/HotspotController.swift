@@ -161,7 +161,7 @@ final class HotspotController {
                 self?.isOnHotspot = onHotspot
             }
         }
-        pathMonitor.start(queue: DispatchQueue(label: "AgentBar.network-path"))
+        pathMonitor.start(queue: DispatchQueue(label: "Cortado.network-path"))
     }
 
     func reloadSavedNetworks() {

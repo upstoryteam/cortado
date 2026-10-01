@@ -3,11 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>AgentBar</string>
+    <string>Cortado</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>com.rickrussie.AgentBar</string>
+    <string>com.rickrussie.Cortado</string>
     <key>CFBundleName</key>
-    <string>AgentBar</string>
+    <string>Cortado</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -19,8 +21,8 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>AgentBar looks for your saved Wi-Fi networks so it can leave the hotspot when one comes into range. macOS only shows network names to apps with location access.</string>
+    <string>Cortado looks for your saved Wi-Fi networks so it can leave the hotspot when one comes into range. macOS only shows network names to apps with location access.</string>
     <key>NSLocationUsageDescription</key>
-    <string>AgentBar looks for your saved Wi-Fi networks so it can leave the hotspot when one comes into range. macOS only shows network names to apps with location access.</string>
+    <string>Cortado looks for your saved Wi-Fi networks so it can leave the hotspot when one comes into range. macOS only shows network names to apps with location access.</string>
 </dict>
 </plist>

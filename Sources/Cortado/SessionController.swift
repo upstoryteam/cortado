@@ -27,7 +27,7 @@ nonisolated enum EndReason: Sendable, Equatable {
         case .battery(let percent): "battery reached \(percent)%"
         case .tooHot: "the Mac was running hot"
         case .agentsFinished: "agents finished"
-        case .quit: "AgentBar quit"
+        case .quit: "Cortado quit"
         }
     }
 }
@@ -168,7 +168,7 @@ final class SessionController {
         if settings.sessionInProgress {
             PowerControl.setLidSleepDisabled(false)
             settings.sessionInProgress = false
-            settings.lastSessionNote = "Last session was cut short because AgentBar closed unexpectedly."
+            settings.lastSessionNote = "Last session was cut short because Cortado closed unexpectedly."
         }
     }
 
@@ -317,7 +317,7 @@ final class SessionController {
             refreshPermission()
             startError = hasPermission
                 ? "macOS refused to change the sleep setting."
-                : "AgentBar needs one-time permission to keep the Mac awake with the lid closed."
+                : "Cortado needs one-time permission to keep the Mac awake with the lid closed."
             return false
         }
         startError = nil

@@ -1,4 +1,6 @@
-# AgentBar
+<img src="docs/icon.png" width="128" alt="The Cortado icon">
+
+# Cortado
 
 A small menu bar app for running coding agents on a MacBook: keep the Mac awake
 with the lid closed for a set time, watch memory pressure, and fall back to a
@@ -7,7 +9,7 @@ phone hotspot when the internet drops.
 ## Build
 
 ```sh
-./build.sh            # builds build/AgentBar.app
+./build.sh            # builds build/Cortado.app
 ./build.sh install    # also copies it to /Applications and relaunches it
 swift test            # two tests briefly toggle the real lid-closed override
 ```
@@ -17,6 +19,12 @@ Requires Xcode's Swift toolchain (Swift 6.2 or later) and macOS 15 or later.
 `Package.swift` stamps the binary with the macOS 27 SDK at link time. SwiftPM
 otherwise records the deployment target (15) as the SDK, and macOS 26 and later
 then draw the app with the old controls instead of glass.
+
+The icon is `Support/AppIcon.icns`, made from the square artwork beside it:
+
+```sh
+swift Support/icon.swift Support/AppIcon.png Support/AppIcon.icns
+```
 
 ## What it does
 
@@ -91,7 +99,7 @@ How it works: closing the lid sleeps a Mac regardless of ordinary sleep
 assertions. The override is `pmset disablesleep 1`, which needs root, so the app
 uses a sudoers rule allowing exactly `pmset disablesleep 1` and `0` without a
 password. If the rule is missing the panel offers to install it
-(`/etc/sudoers.d/agentbar`) behind the macOS administrator prompt. A watchdog
+(`/etc/sudoers.d/cortado`) behind the macOS administrator prompt. A watchdog
 process restores normal sleep if the app dies mid-session, and the app also
 restores it at next launch.
 
@@ -103,13 +111,13 @@ leaves the transcript alone.
 
 ### Memory
 
-The menu bar icon is a gauge of memory pressure, the figure macOS itself uses to
-decide when it is short of memory (100 minus the "free percentage" that
-`memory_pressure` prints). It is not the share of memory in use, which is
-normally far higher: macOS fills spare memory on purpose. It turns yellow at the
-system's warning level and red at critical. The icon is drawn in colour, so it is
-not a template image; it takes the menu bar's light or dark colour each time it
-is drawn.
+The menu bar icon is a cortado cup that fills as memory pressure rises, the
+figure macOS itself uses to decide when it is short of memory (100 minus the
+"free percentage" that `memory_pressure` prints). It is not the share of memory
+in use, which is normally far higher: macOS fills spare memory on purpose. It
+turns yellow at the system's warning level and red at critical. The icon is
+drawn in colour, so it is not a template image; it takes the menu bar's light or
+dark colour each time it is drawn.
 
 The panel gives it one line: the level and the figure. Clicking the line opens
 the rest, and the panel remembers which way it was left: ten minutes of history,
@@ -135,7 +143,7 @@ processes only; system daemons don't report usage without privileges).
 ## What it costs to run
 
 Measured on the release build, on an M-series MacBook with about 600 processes
-running. `AgentBar --measure` (debug build) reprints these.
+running. `Cortado --measure` (debug build) reprints these.
 
 | State | CPU | Memory |
 | --- | --- | --- |
@@ -174,5 +182,5 @@ How it stays there:
 
 ## Uninstall
 
-Quit AgentBar, delete `/Applications/AgentBar.app`, and if the app installed its
-own rule, `sudo rm /etc/sudoers.d/agentbar`.
+Quit Cortado, delete `/Applications/Cortado.app`, and if the app installed its
+own rule, `sudo rm /etc/sudoers.d/cortado`.
