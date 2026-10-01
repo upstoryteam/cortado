@@ -6,6 +6,10 @@ A small menu bar app for running coding agents on a MacBook: keep the Mac awake
 with the lid closed for a set time, watch memory pressure, and fall back to a
 phone hotspot when the internet drops.
 
+| Auto, waiting for an agent | Auto, while an agent works | On, for a set time |
+| --- | --- | --- |
+| <img src="docs/panel-idle.png" width="260" alt="The panel on Auto and off, waiting for an agent"> | <img src="docs/panel-agents.png" width="260" alt="The panel on Auto and on, until Claude Code finishes"> | <img src="docs/panel.png" width="260" alt="The panel on On, with the lengths under the control"> |
+
 ## Build
 
 ```sh
@@ -92,6 +96,8 @@ A session also ends early when any enabled rule fires (Settings):
 - **Agents have finished**: for On, once an agent has worked during it and then
   been quiet for the grace period. If no agent ever works, the timer decides.
 
+<img src="docs/settings.png" width="320" alt="Settings: the default length, the rules that end a session early, the hotspot, and open at login">
+
 When a session ends with the lid shut and no display attached, the Mac is put to
 sleep. With a display attached it is left alone, since someone may be using it.
 
@@ -119,10 +125,14 @@ turns yellow at the system's warning level and red at critical. The icon is
 drawn in colour, so it is not a template image; it takes the menu bar's light or
 dark colour each time it is drawn.
 
+<img src="docs/icons.png" width="360" alt="The menu bar icon at normal, warning and critical memory pressure, on a dark and a light menu bar">
+
 The panel gives it one line: the level and the figure. Clicking the line opens
 the rest, and the panel remembers which way it was left: ten minutes of history,
 used / compressed / swap, and the four apps using the most memory (your own
 processes only; system daemons don't report usage without privileges).
+
+<img src="docs/panel-memory.png" width="320" alt="The panel with the memory line opened: history, used, compressed, swap, and the four largest apps">
 
 ### Hotspot
 

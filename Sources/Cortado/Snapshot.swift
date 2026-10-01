@@ -66,6 +66,7 @@ enum Snapshot {
             .environment(model)
             .background(Color(nsColor: .windowBackgroundColor))
             .environment(\.colorScheme, scheme)
+            .environment(\.controlActiveState, .key)
         let host = NSHostingView(rootView: content)
         host.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
         host.frame = NSRect(origin: .zero, size: host.fittingSize)
