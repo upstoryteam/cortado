@@ -6,6 +6,10 @@ A small menu bar app for running coding agents on a MacBook: keep the Mac awake
 with the lid closed for a set time, watch memory pressure, and fall back to a
 phone hotspot when the internet drops.
 
+<a href="https://github.com/upstoryteam/cortado/releases/latest/download/Cortado.dmg"><img src="docs/download.svg" width="240" alt="Download Cortado for Mac"></a>
+
+For macOS 15 or later, on Apple silicon or Intel. [How to install it](#install).
+
 | Auto, waiting for an agent | Auto, while an agent works | On, for a set time |
 | --- | --- | --- |
 | <img src="docs/panel-idle.png" width="260" alt="The panel on Auto and off, waiting for an agent"> | <img src="docs/panel-agents.png" width="260" alt="The panel on Auto and on, until Claude Code finishes"> | <img src="docs/panel.png" width="260" alt="The panel on On, with the lengths under the control"> |
@@ -22,8 +26,6 @@ phone hotspot when the internet drops.
 Cortado has no window and no Dock icon. It lives in the menu bar, as a small cup
 at the top right of the screen. The first time it runs, its panel opens by
 itself to show where.
-
-It needs macOS 15 or later, on Apple silicon or Intel.
 
 It asks for three things, each once, and only if you want what they are for:
 
