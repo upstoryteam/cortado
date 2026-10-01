@@ -184,3 +184,7 @@ How it stays there:
 
 Quit Cortado, delete `/Applications/Cortado.app`, and if the app installed its
 own rule, `sudo rm /etc/sudoers.d/cortado`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
