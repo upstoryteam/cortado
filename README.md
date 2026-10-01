@@ -178,6 +178,14 @@ password. If the rule is missing the panel offers to install it
 process restores normal sleep if the app dies mid-session, and the app also
 restores it at next launch.
 
+Sleep is also what switches the display off when the lid closes. With the
+override on, the display would stay lit against the keyboard and heat the Mac.
+So during a session the app looks every three seconds, and if the lid is shut
+on a lit display it puts the display to sleep (`pmset displaysleepnow`). It
+looks again each time because anything that wakes the display lights it again.
+With another display attached, macOS switches the built-in one off by itself
+and the app leaves both alone.
+
 An agent counts as working when its session transcript was just written to
 (`~/.claude/projects`, `~/.codex/sessions`, Cursor's `agent-transcripts`), which
 macOS reports as it happens. During a session, an agent whose process tree is

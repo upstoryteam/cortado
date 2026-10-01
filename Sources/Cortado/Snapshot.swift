@@ -107,7 +107,7 @@ enum Snapshot {
         let stats = model.memory.stats
         print("memory:", Format.bytes(stats.used), "used,", stats.pressure.label, Format.percent(stats.pressureFraction))
         print("hotspot:", model.settings.hotspotName, "| on hotspot:", model.hotspot.isOnHotspot, "| online:", model.hotspot.isOnline)
-        print("lid closed:", PowerControl.isLidClosed(), "| battery:", PowerControl.battery().map { "\($0.percent)% ac=\($0.onAC)" } ?? "none",
+        print("lid closed:", PowerControl.isLidClosed(), "| lit under it:", PowerControl.isLitUnderLid(), "| battery:", PowerControl.battery().map { "\($0.percent)% ac=\($0.onAC)" } ?? "none",
               "| hot:", PowerControl.isRunningHot)
         fflush(stdout)
         kill(getpid(), SIGKILL)
@@ -129,6 +129,7 @@ enum Snapshot {
         time("memory statistics") { _ = MemoryStats.current() }
         time("battery") { _ = PowerControl.battery() }
         time("lid state") { _ = PowerControl.isLidClosed() }
+        time("display under the lid") { _ = PowerControl.isLitUnderLid() }
         time("menu bar icon") { _ = StatusIcon.image(fraction: 0.4, level: .normal, awake: .on).tiffRepresentation }
         var snapshot: [ProcessEntry] = []
         time("process list") { snapshot = ProcessSnapshot.capture() }

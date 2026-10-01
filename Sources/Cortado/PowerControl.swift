@@ -88,6 +88,19 @@ nonisolated enum PowerControl {
         Shell.run(pmset, ["sleepnow"])
     }
 
+    // MARK: Display
+
+    /// A closed lid switches the display off only by putting the Mac to sleep.
+    /// With sleep overridden the panel stays lit against the keyboard, where its
+    /// heat has nowhere to go.
+    static func isLitUnderLid() -> Bool {
+        isPutAway() && CGDisplayIsAsleep(CGMainDisplayID()) == 0
+    }
+
+    static func sleepDisplay() {
+        Shell.run(pmset, ["displaysleepnow"])
+    }
+
     // MARK: Idle sleep
 
     static func holdIdleSleepAssertion() -> IOPMAssertionID? {
