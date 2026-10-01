@@ -248,6 +248,10 @@ final class SessionController {
             startForAgents(lastActive: agentsLastActive, now: now)
             return
         }
+        // Checked on every tick, because whatever wakes the display lights it again.
+        if PowerControl.isLitUnderLid() {
+            PowerControl.sleepDisplay()
+        }
         if PowerControl.isRunningHot {
             hotSince = hotSince ?? now
         } else {
