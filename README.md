@@ -109,7 +109,9 @@ One control with three positions, and a knob that slides to the one picked:
 - **Auto**: on while agents work. When Claude Code, Codex or Cursor starts
   working, a session starts with no timer and lasts until they have been quiet
   for the grace period (default 10 minutes). Because the hotspot fallback is
-  armed by a session, that comes on with it.
+  armed by a session, that comes on with it. Auto only switches on with the lid
+  open or a display attached: a shut Mac stirs in its sleep now and then, and an
+  agent stirring with it is no reason to keep it awake.
 - **On**: on for the default length (two hours unless changed in Settings). The
   other lengths appear under it: 30m, 1h, 2h, 4h, 8h, ∞, and a clock for an end
   time on the half hour. Each length counts from now.
@@ -162,6 +164,10 @@ A session also ends early when any enabled rule fires (Settings):
 
 - **Battery is low**: at or below the floor (default 20%) while unplugged.
 - **Mac is running hot**: macOS reports serious thermal pressure for a minute.
+- **Auto has been on too long**: six hours at a stretch unless changed, however
+  busy agents look. This is the backstop for an agent that never goes quiet, or
+  a process one left running. Auto then stays off until the agents have been
+  quiet for the grace period, or until Auto or On is picked again.
 - **Agents have finished**: for On, once an agent has worked during it and then
   been quiet for the grace period. If no agent ever works, the timer decides.
 

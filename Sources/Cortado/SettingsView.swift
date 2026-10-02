@@ -46,6 +46,12 @@ struct SettingsView: View {
                 SettingRow("The Mac runs hot") {
                     Toggle("The Mac runs hot", isOn: $settings.stopWhenHot)
                 }
+                SettingRow("Auto has been on for \(Format.spelledDuration(TimeInterval(settings.autoLimitHours * 3600)))") {
+                    Toggle("Auto has been on too long", isOn: $settings.autoLimitEnabled)
+                } stepper: {
+                    Stepper("Hours on Auto", value: $settings.autoLimitHours, in: 1...24)
+                        .disabled(!settings.autoLimitEnabled)
+                }
                 SettingRow("Agents are idle for \(settings.agentsGraceMinutes) min") {
                     Toggle("Agents have finished", isOn: $settings.stopWhenAgentsFinish)
                 } stepper: {

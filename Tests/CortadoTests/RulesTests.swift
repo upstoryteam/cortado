@@ -3,8 +3,9 @@ import Testing
 @testable import Cortado
 
 private let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
-private let allRules = StopRules(batteryFloor: 20, stopWhenHot: true, agentsGrace: 600, endsWithAgents: true)
-private let noRules = StopRules(batteryFloor: nil, stopWhenHot: false, agentsGrace: 600, endsWithAgents: false)
+private let sixHours: TimeInterval = 6 * 3600
+private let allRules = StopRules(batteryFloor: 20, stopWhenHot: true, agentsGrace: 600, endsWithAgents: true, autoLimit: sixHours)
+private let noRules = StopRules(batteryFloor: nil, stopWhenHot: false, agentsGrace: 600, endsWithAgents: false, autoLimit: nil)
 
 private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: UInt64 = 0, cpu: UInt64 = 0) -> ProcessEntry {
     ProcessEntry(pid: pid, parent: parent, path: path, footprint: footprint, cpuTime: cpu)
@@ -100,6 +101,23 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
         // The panel names the same moment as the one it ends at.
         #expect(session.quietEnd(agentsLastActive: start.addingTimeInterval(400), grace: 600) == start.addingTimeInterval(1000))
         #expect(session.quietEnd(agentsLastActive: nil, grace: 600) == start.addingTimeInterval(600))
+    }
+
+    @Test func `Auto ends at its limit however busy agents look, and On is left to its own timer`() {
+        func reason(after seconds: TimeInterval, followsAgents: Bool, rules: StopRules = allRules) -> EndReason? {
+            Session(started: start, end: nil, followsAgents: followsAgents).endReason(
+                now: start.addingTimeInterval(seconds),
+                rules: rules,
+                battery: nil,
+                hotSince: nil,
+                agentsLastActive: start.addingTimeInterval(seconds - 5)
+            )
+        }
+        #expect(reason(after: sixHours - 1, followsAgents: true) == nil)
+        #expect(reason(after: sixHours, followsAgents: true) == .limit(sixHours))
+        #expect(reason(after: sixHours * 4, followsAgents: true, rules: noRules) == nil)
+        #expect(reason(after: sixHours * 4, followsAgents: false) == nil)
+        #expect(EndReason.limit(sixHours).note == "Auto had been on for 6 hrs")
     }
 }
 
@@ -310,15 +328,19 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
 @Suite(.serialized) struct LidOverride {
     private static let transcript = Agent.claude.transcriptRoot + "/project/session.jsonl"
 
-    /// A controller with only the agent rules in play, so the Mac's battery and heat can't decide a test.
-    @MainActor private func controller() -> (SessionController, AgentMonitor, Settings) {
+    /// A controller with only the agent rules in play, so the Mac's battery, heat and lid can't decide a test.
+    @MainActor private func controller(
+        isPutAway: @escaping () -> Bool = { false }
+    ) -> (SessionController, AgentMonitor, Settings) {
         let defaults = UserDefaults(suiteName: "Cortado.tests")!
         defaults.removePersistentDomain(forName: "Cortado.tests")
         let settings = Settings(defaults: defaults)
         settings.batteryFloorEnabled = false
         settings.stopWhenHot = false
         let agents = AgentMonitor()
-        let controller = SessionController(settings: settings, agents: agents, hotspot: HotspotController(settings: settings))
+        let controller = SessionController(
+            settings: settings, agents: agents, hotspot: HotspotController(settings: settings), isPutAway: isPutAway
+        )
         controller.recover()
         return (controller, agents, settings)
     }
@@ -352,6 +374,76 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
         #expect(controller.session == Session(started: at(20), end: nil, followsAgents: true))
 
         controller.select(.off, now: at(30))
+        #expect(!PowerControl.isLidSleepDisabled())
+    }
+
+    @Test(.enabled(if: PowerControl.hasLidSleepPermission() && !PowerControl.isLidSleepDisabled()))
+    @MainActor func `Auto switches off at its limit, and stays off until the agents have finished`() {
+        let (controller, agents, settings) = controller()
+        let now = Date.now
+        func at(_ seconds: TimeInterval) -> Date { now.addingTimeInterval(seconds) }
+        func work(at seconds: TimeInterval) { agents.transcriptsChanged([Self.transcript], now: at(seconds)) }
+
+        work(at: 0)
+        controller.tick(now: at(3))
+        #expect(controller.mark == .on)
+
+        work(at: sixHours)
+        controller.tick(now: at(sixHours))
+        #expect(controller.mark == .on, "three seconds short of six hours")
+        controller.tick(now: at(sixHours + 3))
+        #expect(!controller.isActive)
+        #expect(controller.mode == .auto)
+        #expect(controller.mark == .off, "not waiting either: the agent is still at it")
+        #expect(settings.lastSessionNote?.hasSuffix("Auto had been on for 6 hrs.") == true)
+        #expect(!PowerControl.isLidSleepDisabled())
+
+        work(at: sixHours + 60)
+        controller.tick(now: at(sixHours + 63))
+        #expect(!controller.isActive, "more work doesn't switch it back on")
+
+        controller.tick(now: at(sixHours + 60 + 600))
+        #expect(controller.mark == .waiting, "quiet for the grace period, so the next job gets Auto again")
+        work(at: sixHours + 700)
+        controller.tick(now: at(sixHours + 703))
+        #expect(controller.mark == .on)
+
+        // Picking Auto again doesn't wait for the agents to finish.
+        work(at: 2 * sixHours + 700)
+        controller.tick(now: at(2 * sixHours + 703))
+        #expect(!controller.isActive)
+        controller.select(.auto, now: at(2 * sixHours + 710))
+        #expect(controller.mark == .on)
+
+        controller.select(.off, now: at(2 * sixHours + 720))
+        #expect(!PowerControl.isLidSleepDisabled())
+    }
+
+    @Test(.enabled(if: PowerControl.hasLidSleepPermission() && !PowerControl.isLidSleepDisabled()))
+    @MainActor func `Auto leaves a shut Mac alone, and switches on once it is opened`() {
+        var lidShut = true
+        let (controller, agents, _) = controller(isPutAway: { lidShut })
+        let now = Date.now
+        func at(_ seconds: TimeInterval) -> Date { now.addingTimeInterval(seconds) }
+
+        agents.transcriptsChanged([Self.transcript], now: now)
+        controller.tick(now: at(3))
+        #expect(!controller.isActive, "an agent stirring under the lid")
+        #expect(controller.mark == .waiting)
+        #expect(!PowerControl.isLidSleepDisabled())
+
+        lidShut = false
+        controller.tick(now: at(6))
+        #expect(controller.mark == .on)
+        #expect(PowerControl.isLidSleepDisabled())
+
+        // Shutting the lid on a session that is already on changes nothing.
+        lidShut = true
+        agents.transcriptsChanged([Self.transcript], now: at(9))
+        controller.tick(now: at(12))
+        #expect(controller.mark == .on)
+
+        controller.select(.off, now: at(15))
         #expect(!PowerControl.isLidSleepDisabled())
     }
 
@@ -464,6 +556,9 @@ private func entry(_ pid: pid_t, parent: pid_t = 1, _ path: String, footprint: U
         let twoHours: TimeInterval = 2 * 3600
         #expect(settings.defaultLength == twoHours)
         #expect(settings.startWithAgents)
+        #expect(settings.stopRules.autoLimit == sixHours)
+        settings.autoLimitEnabled = false
+        #expect(Settings(defaults: defaults).stopRules.autoLimit == nil)
         #expect(Session.lengths.contains(settings.defaultLength))
 
         settings.defaultLength = nil
