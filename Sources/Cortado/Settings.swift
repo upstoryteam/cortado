@@ -14,6 +14,9 @@ final class Settings {
     var batteryFloorEnabled: Bool { didSet { defaults.set(batteryFloorEnabled, forKey: Key.batteryFloorEnabled) } }
     var batteryFloor: Int { didSet { defaults.set(batteryFloor, forKey: Key.batteryFloor) } }
     var stopWhenHot: Bool { didSet { defaults.set(stopWhenHot, forKey: Key.stopWhenHot) } }
+    /// The longest Auto stays on at a stretch, however busy agents look.
+    var autoLimitEnabled: Bool { didSet { defaults.set(autoLimitEnabled, forKey: Key.autoLimitEnabled) } }
+    var autoLimitHours: Int { didSet { defaults.set(autoLimitHours, forKey: Key.autoLimitHours) } }
 
     var stopWhenAgentsFinish: Bool { didSet { defaults.set(stopWhenAgentsFinish, forKey: Key.stopWhenAgentsFinish) } }
     var agentsGraceMinutes: Int { didSet { defaults.set(agentsGraceMinutes, forKey: Key.agentsGraceMinutes) } }
@@ -44,6 +47,8 @@ final class Settings {
             Key.batteryFloorEnabled: true,
             Key.batteryFloor: 20,
             Key.stopWhenHot: true,
+            Key.autoLimitEnabled: true,
+            Key.autoLimitHours: 6,
             Key.stopWhenAgentsFinish: true,
             Key.agentsGraceMinutes: 10,
             Key.watchedAgents: Agent.allCases.map(\.rawValue),
@@ -56,6 +61,8 @@ final class Settings {
         batteryFloorEnabled = defaults.bool(forKey: Key.batteryFloorEnabled)
         batteryFloor = defaults.integer(forKey: Key.batteryFloor)
         stopWhenHot = defaults.bool(forKey: Key.stopWhenHot)
+        autoLimitEnabled = defaults.bool(forKey: Key.autoLimitEnabled)
+        autoLimitHours = defaults.integer(forKey: Key.autoLimitHours)
         stopWhenAgentsFinish = defaults.bool(forKey: Key.stopWhenAgentsFinish)
         agentsGraceMinutes = defaults.integer(forKey: Key.agentsGraceMinutes)
         watchedAgents = Set((defaults.stringArray(forKey: Key.watchedAgents) ?? []).compactMap(Agent.init))
@@ -73,7 +80,8 @@ final class Settings {
             batteryFloor: batteryFloorEnabled ? batteryFloor : nil,
             stopWhenHot: stopWhenHot,
             agentsGrace: TimeInterval(agentsGraceMinutes * 60),
-            endsWithAgents: stopWhenAgentsFinish
+            endsWithAgents: stopWhenAgentsFinish,
+            autoLimit: autoLimitEnabled ? TimeInterval(autoLimitHours * 3600) : nil
         )
     }
 
@@ -83,6 +91,8 @@ final class Settings {
         static let batteryFloorEnabled = "batteryFloorEnabled"
         static let batteryFloor = "batteryFloor"
         static let stopWhenHot = "stopWhenHot"
+        static let autoLimitEnabled = "autoLimitEnabled"
+        static let autoLimitHours = "autoLimitHours"
         static let stopWhenAgentsFinish = "stopWhenAgentsFinish"
         static let agentsGraceMinutes = "agentsGraceMinutes"
         static let watchedAgents = "watchedAgents"

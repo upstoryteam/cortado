@@ -10,6 +10,8 @@ nonisolated struct StopRules: Sendable, Equatable {
     var agentsGrace: TimeInterval
     /// Whether a session switched on by hand also ends when agents finish.
     var endsWithAgents: Bool
+    /// The longest a session that follows agents may last, however busy they look.
+    var autoLimit: TimeInterval?
 }
 
 nonisolated enum EndReason: Sendable, Equatable {
@@ -18,6 +20,7 @@ nonisolated enum EndReason: Sendable, Equatable {
     case battery(Int)
     case tooHot
     case agentsFinished
+    case limit(TimeInterval)
     case quit
 
     var note: String {
@@ -27,6 +30,7 @@ nonisolated enum EndReason: Sendable, Equatable {
         case .battery(let percent): "battery reached \(percent)%"
         case .tooHot: "the Mac was running hot"
         case .agentsFinished: "agents finished"
+        case .limit(let length): "Auto had been on for \(Format.spelledDuration(length))"
         case .quit: "Cortado quit"
         }
     }
@@ -66,6 +70,9 @@ nonisolated struct Session: Sendable, Equatable {
         if followsAgents {
             if now >= quietEnd(agentsLastActive: agentsLastActive, grace: rules.agentsGrace) {
                 return .agentsFinished
+            }
+            if let limit = rules.autoLimit, now.timeIntervalSince(started) >= limit {
+                return .limit(limit)
             }
         } else if rules.endsWithAgents, AgentIdleRule.isFinished(
             lastActive: agentsLastActive, sessionStart: started, grace: rules.agentsGrace, now: now
@@ -113,7 +120,7 @@ final class SessionController {
     private(set) var hasPermission = false
     private(set) var startError: String?
     private(set) var isInstallingPermission = false
-    /// macOS refused to switch on for agents. It isn't tried again until they finish.
+    /// Auto isn't to switch on again until agents finish: macOS refused to, or it reached its limit.
     private(set) var isHeldOff = false
 
     /// The three positions of the panel's control.
@@ -128,6 +135,8 @@ final class SessionController {
     @ObservationIgnored private let settings: Settings
     @ObservationIgnored private let agents: AgentMonitor
     @ObservationIgnored private let hotspot: HotspotController
+    /// Whether the lid is shut with no display attached. Tests answer for the lid themselves.
+    @ObservationIgnored private let isPutAway: () -> Bool
     @ObservationIgnored private var watchdog: PowerControl.Watchdog?
     @ObservationIgnored private var assertion: IOPMAssertionID?
     @ObservationIgnored private var hotSince: Date?
@@ -156,10 +165,16 @@ final class SessionController {
         return session.followsAgents || settings.stopWhenAgentsFinish
     }
 
-    init(settings: Settings, agents: AgentMonitor, hotspot: HotspotController) {
+    init(
+        settings: Settings,
+        agents: AgentMonitor,
+        hotspot: HotspotController,
+        isPutAway: @escaping () -> Bool = PowerControl.isPutAway
+    ) {
         self.settings = settings
         self.agents = agents
         self.hotspot = hotspot
+        self.isPutAway = isPutAway
     }
 
     /// Call once at launch. Restores normal sleep if a previous run ended mid-session.
@@ -237,7 +252,7 @@ final class SessionController {
         settings.lastSessionNote = reason == .stopped ? nil : "Turned off at \(time): \(reason.note)."
 
         // With the lid shut nothing else will put the Mac to sleep until it is opened and closed again.
-        if reason != .stopped, reason != .quit, PowerControl.isPutAway() {
+        if reason != .stopped, reason != .quit, isPutAway() {
             PowerControl.sleepNow()
         }
     }
@@ -271,6 +286,10 @@ final class SessionController {
             begin(Session(started: session.started, end: nil, followsAgents: true))
         } else {
             stop(reason, now: now)
+            // Agents still at it would otherwise switch it straight back on.
+            if case .limit = reason {
+                isHeldOff = true
+            }
         }
     }
 
@@ -285,6 +304,8 @@ final class SessionController {
             return
         }
         guard hasPermission, AgentIdleRule.isWorking(lastActive: lastActive, now: now) else { return }
+        // A shut Mac stirs in its sleep, and an agent that stirs with it is no reason to keep it awake.
+        guard !isPutAway() else { return }
         // No point starting what a rule would end at once: a low battery, or a Mac already running hot.
         let session = Session(started: now, end: nil, followsAgents: true)
         let blocked = session.endReason(
